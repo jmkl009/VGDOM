@@ -4,11 +4,9 @@ import torch
 import torch.nn as nn
 
 from constants import Constants
-from datasets import load_vistext_data
-from evaluate import evaluate
-from models import VisTextGCN, BboxOnlyModel
-from train import train_vistext_model, evaluate_vistext_model
-from datasets import load_data, GraphConstuctor
+from datasets import load_vgdom_data, GraphConstuctor
+from models import VGDOM
+from train import train_vgdom, evaluate_vgdom
 
 from utils import cmdline_args_parser, print_and_log, set_all_seeds
 
@@ -112,7 +110,6 @@ print('\n%s Training on Fold-%s %s' % ('*'*20, CV_FOLD, '*'*20))
 ########## DATA LOADERS ##########
 train_loader, val_loader, test_loader = load_vistext_data(DATA_DIR, train_img_ids, val_img_ids, test_img_ids, 
                                                   BATCH_SIZE, NUM_WORKERS)
-# n_additional_features = train_loader.dataset.n_additional_features
 pretrained_word_vectors = train_loader.dataset.pretrained_word_vectors
 
 log_file = '%s/Fold-%s logs.txt' % (results_dir, CV_FOLD)
@@ -140,59 +137,25 @@ num_rels = GraphConstuctor(num_candidates).num_rels
 
 char_vocab_size = train_loader.dataset.char_vocab_size
 tag_vocab_size = train_loader.dataset.tag_vocab_size
-CHAR_EMBED_DIM = 8
-TAG_EMBED_DIM = 30
+CHAR_EMBED_DIM = 100
+TAG_EMBED_DIM = 100
 
-model = VisTextGCN(char_vocab_size, tag_vocab_size, N_CLASSES, num_candidates, 
+model = VGDOM(char_vocab_size, tag_vocab_size, N_CLASSES, num_candidates, 
                         num_rels, device, pretrained_word_vectors, HIDDEN_DIM, USE_BBOX_FEAT,
                CHAR_EMBED_DIM, TAG_EMBED_DIM, BBOX_HIDDEN_DIM, TRAINABLE_CONVNET, DROP_PROB, CLASS_NAMES, splitted=False).to(device)
-# model.split()
-# model = model.half()
-# model.gcn = model.gcn.float()
-# model = BboxOnlyModel().to(device)
-# model.to_parallel()
-# model = nn.DataParallel(model)
+
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=1) # No LR Scheduling
 criterion = nn.CrossEntropyLoss(reduction='sum').to(device)
-# criterion = nn.BCEWithLogitsLoss(reduction='sum').to(device)
+
 if args.retrain:
     print('Loading Saved Model...')
     model.load_state_dict(torch.load(model_save_file))
 
-# def try_train():
-#     try:
-#         val_acc, gcn_model_save_file = train_vistext_model(model, train_loader, optimizer, scheduler, criterion, N_EPOCHS, device, val_loader, EVAL_INTERVAL,
-#                         log_file, model_save_file)
-#     except Exception as e: 
-#         print(e)
-#         return False
-#     return val_acc, gcn_model_save_file
-
-# train_result = try_train()
-# while not train_result:
-#     torch.cuda.empty_cache()
-#     train_result = try_train()
-# val_acc, gcn_model_save_file = train_result
-val_acc, gcn_model_save_file = train_vistext_model(model, train_loader, optimizer, scheduler, criterion, N_EPOCHS, device, val_loader, EVAL_INTERVAL,
+val_acc = train_vgdom(model, train_loader, optimizer, scheduler, criterion, N_EPOCHS, device, val_loader, EVAL_INTERVAL,
                         log_file, model_save_file)
-
-# save_file_delimited = model_save_file.split('/')
-# prev_path = "/".join(save_file_delimited[:-1])
-# save_file_delimited = save_file_delimited[-1].split('.')
-# gcn_model_save_file = (
-#        prev_path + "/" + save_file_delimited[0] + '-gcn.' + save_file_delimited[1]
-#        if len(save_file_delimited) > 1 else 
-#        prev_path + "/" + save_file_delimited[0] + '-gcn' 
-#        )
-
-import sys
 
 print('Model Trained! Restoring model to best Eval performance checkpoint...')
 model.load_state_dict(torch.load(model_save_file))
 
-_ = evaluate_vistext_model(model, test_loader, device, 1, 'TEST', log_file)
-
-print('Evaluating on test data with best GCN model...')
-model.load_state_dict(torch.load(gcn_model_save_file))
-_ = evaluate_vistext_model(model, test_loader, device, 1, 'TEST', log_file)
+_ = evaluate_vgdom(model, test_loader, device, 1, 'TEST', log_file)
