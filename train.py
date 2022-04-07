@@ -1,11 +1,13 @@
 import numpy as np
 from time import time
+
 import torch
-from datasets import GraphConstuctor
-from utils import print_and_log
 from tqdm import tqdm
 import torch.nn.functional as F
 
+from constants import Constants
+from datasets import GraphConstuctor
+from utils import print_and_log
 
 
 def match(logits, labels, match_label):
@@ -15,13 +17,11 @@ def match(logits, labels, match_label):
         return False
     return (pred_idx == match_label_indices[0][0]).item()
 
-class_names = ['Author', 'Title', 'Image']
-
 def print_pti_acc_stats(correct_nums, total_num, log_file, split_name='TRAIN', acc_name='Acc', acc_modifier='top-1'):
     class_accs = np.array(correct_nums)/total_num * 100
     print_and_log('[%s] Avg_class_Accuracy: %.2f%%' % (split_name, class_accs.mean()), log_file)
     for c in range(3):
-        print_and_log('%s %s-%s: %.2f%%' % (class_names[c], acc_modifier, acc_name, class_accs[c]), log_file)
+        print_and_log('%s %s-%s: %.2f%%' % (Constants.CLASS_NAMES[c], acc_modifier, acc_name, class_accs[c]), log_file)
     print_and_log('', log_file)
 
 def tree_squash_probs(tree, outputs, leaf_num, device):
