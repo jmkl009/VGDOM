@@ -273,7 +273,7 @@ class PassDownTreeLSTM(nn.Module):
 class VGDOM(nn.Module):
     def __init__(self, char_vocab_size, tag_vocab_size, n_classes, num_candidates, 
                 num_rels, device, pretrained_wordvecs, hidden_dim=300, 
-                 use_bbox_feat=True, char_embed_dim=100, tag_embed_dim=100, bbox_hidden_dim=32, trainable_convnet=True, drop_prob=0.2, class_names=None, splitted=False):
+                 use_bbox_feat=True, char_embed_dim=100, tag_embed_dim=100, bbox_hidden_dim=32, trainable_convnet=True, drop_prob=0.2):
         super(VGDOM, self).__init__()
 
         self.n_classes = n_classes
@@ -281,14 +281,13 @@ class VGDOM(nn.Module):
         self.hidden_dim = hidden_dim
         self.use_bbox_feat = use_bbox_feat
         self.bbox_hidden_dim = bbox_hidden_dim
-        self.class_names = np.arange(self.n_classes).astype(str) if class_names is None else class_names
+        self.class_names = np.arange(self.n_classes).astype(str)
         self.num_candidates = num_candidates
         self.num_rels = num_rels
         self.char_vocab_size = char_vocab_size
         self.char_embed_dim = char_embed_dim
         self.tag_vocab_size = tag_vocab_size
         self.tag_embed_dim = tag_embed_dim
-        self.splitted = splitted
 
         self.convnet = torchvision.models.resnet18(pretrained=True)
         modules = list(self.convnet.children())[:-5]
@@ -412,16 +411,6 @@ class VGDOM(nn.Module):
         print('Model Parameters:', count_parameters(self))
         print('Conv net Parameters:', count_parameters(self.char_conv))
 
-    def split(self):
-        # self.bbox_feat_encoder = self.bbox_feat_encoder.to('cuda:1')
-        self.tree_rnn = self.tree_rnn.to('cuda:1')
-        self.leaf_rnn = self.leaf_rnn.to('cuda:1')
-        self.decoder = self.decoder.to('cuda:1')
-        self.gcn = self.gcn.to('cuda:1')
-        self.gcn_output_decoder = self.gcn_output_decoder.to('cuda:1')
-        self.intermediate_output_encoder = self.intermediate_output_encoder.to('cuda:1')
-        self.splitted=True
-        gc.collect()
 
     def num_bboxes_per_img(self, bboxes_img_indices):
         assert bboxes_img_indices[0] == 0
@@ -499,8 +488,6 @@ class VGDOM(nn.Module):
                 tag_path.extend([self.tag_vocab_size-1] * (max_tag_path_len - len(tag_path))) # padding
 
             x = self.tag_emb_dropout(self.tag_emb(torch.tensor(tags).to(device)))
-            if self.splitted:
-                x = x.to('cuda:1')
             return x, tag_path_lens
 
         char_embs = char_emb_layer(chars, self.device)
@@ -545,11 +532,6 @@ class VGDOM(nn.Module):
             bbox_features = extended_bboxes[:, :0] # size [n_bboxes, 0]
 
         ##### NODE VISUAL + BBOX FEATURES #####
-        if self.splitted:
-            images = images.to('cuda:1')
-            extended_bboxes = extended_bboxes.to('cuda:1')
-            bbox_features = bbox_features.to('cuda:1')
-            rel_bboxes = rel_bboxes.to('cuda:1')
         visual_features = self.roi_pool(self.convnet(images), extended_bboxes).view(extended_bboxes.shape[0], self.n_visual_feat)
         # visual_features = torch.zeros((extended_bboxes.shape[0], self.n_visual_feat)).to(self.device)
         extended_node_features = torch.cat((visual_features, bbox_features), dim=1)
@@ -583,14 +565,9 @@ class VGDOM(nn.Module):
 
         leaf_features_partitioned = []
         for leaf_feature in leaf_features:
-            if self.splitted:
-                padded_leaf_features = torch.cat((
-                    leaf_feature, 
-                    torch.zeros(max_num_leafs - leaf_feature.shape[0], leaf_feature.shape[1]).to('cuda:1')), dim=0)
-            else:
-                padded_leaf_features = torch.cat((
-                    leaf_feature, 
-                    torch.zeros(max_num_leafs - leaf_feature.shape[0], leaf_feature.shape[1]).to(self.device)), dim=0)
+            padded_leaf_features = torch.cat((
+                leaf_feature, 
+                torch.zeros(max_num_leafs - leaf_feature.shape[0], leaf_feature.shape[1]).to(self.device)), dim=0)
             leaf_features_partitioned.append(padded_leaf_features)
         leaf_features_rebatched = torch.stack(leaf_features_partitioned)
         packed_leaf_features = pack_padded_sequence(leaf_features_rebatched, leaf_nums, batch_first=True, enforce_sorted=False)

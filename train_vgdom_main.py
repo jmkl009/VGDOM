@@ -142,7 +142,7 @@ TAG_EMBED_DIM = 30
 
 model = VGDOM(char_vocab_size, tag_vocab_size, N_CLASSES, num_candidates, 
                         num_rels, device, pretrained_word_vectors, HIDDEN_DIM, USE_BBOX_FEAT,
-               CHAR_EMBED_DIM, TAG_EMBED_DIM, BBOX_HIDDEN_DIM, TRAINABLE_CONVNET, DROP_PROB, CLASS_NAMES, splitted=False).to(device)
+               CHAR_EMBED_DIM, TAG_EMBED_DIM, BBOX_HIDDEN_DIM, TRAINABLE_CONVNET, DROP_PROB).to(device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=1) # No LR Scheduling
