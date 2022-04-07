@@ -86,10 +86,7 @@ def train_vgdom(model, train_loader, optimizer, scheduler, criterion, n_epochs, 
 
         for i, (_, images, leaf_bboxes, extended_bboxes, texts, chars, leaf_tags, tag_paths, labels, trees, leaf_nums, norm_factors, rel_bboxes) in enumerate(tqdm(train_loader)):
             
-            if model.splitted:
-                labels = labels.to('cuda:1')
-            else:
-                labels = labels.to(device) # [total_n_bboxes_in_batch]
+            labels = labels.to(device) # [total_n_bboxes_in_batch]
             n_bboxes += leaf_bboxes.shape[0]
             
             optimizer.zero_grad()
