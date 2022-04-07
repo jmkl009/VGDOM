@@ -7,12 +7,12 @@ import pandas as pd
 
 from utils import pkl_load
 
-class VisTextDataset(torchvision.datasets.VisionDataset):
+class VGDOMDataset(torchvision.datasets.VisionDataset):
     """
     Class to load train/val/test datasets
     """
     def __init__(self, root, img_ids):
-        super(VisTextDataset, self).__init__(root)
+        super(VGDOMDataset, self).__init__(root)
         
         self.ids = [int(id) for id in img_ids]
         self.img_transform = torchvision.transforms.Compose([
@@ -78,7 +78,7 @@ class VisTextDataset(torchvision.datasets.VisionDataset):
             numericalized_text = []
             numericalized_chars = []
             # Cap number of words to 20
-            for word in text:
+            for word in text[:20]:
                 numericalized_chars.append([self.char_dict[char] for char in word])
                 numericalized_text.append(self.word_dict[word])
             numericalized_textss.append(numericalized_text)
@@ -100,7 +100,7 @@ class VisTextDataset(torchvision.datasets.VisionDataset):
     def __len__(self):
         return len(self.ids)
 
-def custom_collate_vistext_fn(batch):
+def custom_collate_vgdom_fn(batch):
 
     img_ids, images, leaf_bboxes, extended_bboxes, texts, chars, leaf_tags, tag_paths, labels, trees, leaf_nums, norm_factors, rel_bboxes = zip(*batch)
 
@@ -158,17 +158,17 @@ def load_vgdom_data(data_dir, train_img_ids, val_img_ids, test_img_ids, batch_si
     assert np.intersect1d(val_img_ids, test_img_ids).size == 0
     assert np.intersect1d(train_img_ids, test_img_ids).size == 0
     
-    train_dataset = VisTextDataset(data_dir, train_img_ids)
+    train_dataset = VGDOMDataset(data_dir, train_img_ids)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
-                              collate_fn=custom_collate_vistext_fn, drop_last=False)
+                              collate_fn=custom_collate_vgdom_fn, drop_last=False)
 
-    val_dataset = VisTextDataset(data_dir, val_img_ids)
+    val_dataset = VGDOMDataset(data_dir, val_img_ids)
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=num_workers,
-                            collate_fn=custom_collate_vistext_fn, drop_last=False)
+                            collate_fn=custom_collate_vgdom_fn, drop_last=False)
     
-    test_dataset = VisTextDataset(data_dir, test_img_ids)
+    test_dataset = VGDOMDataset(data_dir, test_img_ids)
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=num_workers,
-                             collate_fn=custom_collate_vistext_fn, drop_last=False)
+                             collate_fn=custom_collate_vgdom_fn, drop_last=False)
     
     print('No. of Images\t Train: %d\t Val: %d\t Test: %d\n' % ( len(train_dataset), len(val_dataset), len(test_dataset) ))
     

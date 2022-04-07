@@ -117,6 +117,8 @@ def train_vgdom(model, train_loader, optimizer, scheduler, criterion, n_epochs, 
                                 match(output_segment, labels_segment, 3))            
 
                 curr_idx += num_leafs
+
+            loss = criterion(output, labels)
             
             graph_losses = []
             curr_idx = 0
@@ -150,10 +152,17 @@ def train_vgdom(model, train_loader, optimizer, scheduler, criterion, n_epochs, 
                 bbox_idx += num_bbox
 
             if len(graph_losses) > 0:
-                loss = sum(graph_losses) * (1/len(graph_losses))
-                epoch_loss += loss.item()  # There is normal loss + tree loss + and 2 gcn loss
-                loss.backward()
-                optimizer.step()
+                # loss = sum(graph_losses) * (1/len(graph_losses))
+                # epoch_loss += loss.item()  # There is normal loss + tree loss + and 2 gcn loss
+                # loss.backward()
+                # optimizer.step()
+                # del loss
+                total_graph_loss = sum(graph_losses) * (1/len(graph_losses))  #* len(eval_loader.dataset) / total_domain_num
+                loss += total_graph_loss
+
+            epoch_loss += loss.item()
+            loss.backward()
+            optimizer.step()
 
         print_and_log('Epoch: %2d  Loss: %.4f  (%.2fs)' % (epoch, epoch_loss/n_bboxes, time()-start), log_file)
         print_pti_acc_stats([gcn_price_correct_macro, gcn_title_correct_macro, gcn_image_correct_macro], total_domain_num, log_file, acc_name='Macro Acc', acc_modifier='gcn')

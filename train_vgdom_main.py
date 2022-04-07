@@ -108,7 +108,7 @@ if not os.path.exists(results_dir):
 
 print('\n%s Training on Fold-%s %s' % ('*'*20, CV_FOLD, '*'*20))
 ########## DATA LOADERS ##########
-train_loader, val_loader, test_loader = load_vistext_data(DATA_DIR, train_img_ids, val_img_ids, test_img_ids, 
+train_loader, val_loader, test_loader = load_vgdom_data(DATA_DIR, train_img_ids, val_img_ids, test_img_ids, 
                                                   BATCH_SIZE, NUM_WORKERS)
 pretrained_word_vectors = train_loader.dataset.pretrained_word_vectors
 
@@ -137,8 +137,8 @@ num_rels = GraphConstuctor(num_candidates).num_rels
 
 char_vocab_size = train_loader.dataset.char_vocab_size
 tag_vocab_size = train_loader.dataset.tag_vocab_size
-CHAR_EMBED_DIM = 100
-TAG_EMBED_DIM = 100
+CHAR_EMBED_DIM = 8
+TAG_EMBED_DIM = 30
 
 model = VGDOM(char_vocab_size, tag_vocab_size, N_CLASSES, num_candidates, 
                         num_rels, device, pretrained_word_vectors, HIDDEN_DIM, USE_BBOX_FEAT,
