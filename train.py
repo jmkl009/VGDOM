@@ -74,11 +74,6 @@ def train_vgdom(model, train_loader, optimizer, scheduler, criterion, n_epochs, 
     save_file_delimited = model_save_file.split('/')
     prev_path = "/".join(save_file_delimited[:-1])
     save_file_delimited = save_file_delimited[-1].split('.')
-    gcn_model_save_file = (
-            prev_path + "/" + save_file_delimited[0] + '-gcn.' + save_file_delimited[1]
-            if len(save_file_delimited) > 1 else 
-            prev_path + "/" + save_file_delimited[0] + '-gcn' 
-            )
     for epoch in range(1, n_epochs+1):
         start = time()
         epoch_loss, epoch_correct, n_bboxes = 0.0, 0.0, 0.0
@@ -169,11 +164,11 @@ def train_vgdom(model, train_loader, optimizer, scheduler, criterion, n_epochs, 
             if gcn_eval_acc > best_gcn_eval_acc:
                 print('GCN Model Saved!', gcn_eval_acc, '>', best_gcn_eval_acc)
                 best_gcn_eval_acc = gcn_eval_acc
-                torch.save(model.state_dict(), gcn_model_save_file)
+                torch.save(model.state_dict(), model_save_file)
             model.train()
         scheduler.step()
 
-    return best_eval_acc, gcn_model_save_file
+    return best_eval_acc
 
 
 @torch.no_grad()
