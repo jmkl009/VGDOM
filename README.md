@@ -5,6 +5,8 @@ Datasets and implementation of FreeDOM and SimpDOM available at https://drive.go
 
 1. Install the packages
    ```sh
+   conda install pytorch torchvision -c pytorch
+   conda install -c dglteam dgl
    pip install -r requirements.txt
    ```
 2. To select the dataset being tested, modify the path to the directory and the class names in constants.py. 
