@@ -11,7 +11,7 @@ Python Version: 3.8
    conda install dgl-cuda11.1 -c dglteam 
    conda install pandas requests tqdm numba
    ```
-2. To select the dataset being tested, modify the path to the directory and the class names in constants.py. 
+2. To select the dataset being tested, modify the path to the directory, split directory and the class names in constants.py. 
 3. Start your training and testing process
    ```sh
    python3 train_vgdom_main.py -e [epoch number] -cvf [fold number] -bs [batch_size]
