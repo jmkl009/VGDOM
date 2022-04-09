@@ -5,7 +5,7 @@ Datasets and implementation of FreeDOM and SimpDOM available at https://drive.go
 
 1. Install the packages
    ```sh
-   conda install pytorch=1.8.1 torchvision -c pytorch
+   conda install pytorch=1.8.1 torchvision=0.9.1 -c pytorch
    conda install -c dglteam dgl-cuda11.1
    pip install -r requirements.txt
    ```
