@@ -6,8 +6,9 @@ Python Version: 3.8
 
 1. Install the packages
    ```sh
+   conda install cudatoolkit=11.1.74 -c nvidia
    conda install pytorch=1.8.1 torchvision=0.9.1 -c pytorch
-   conda install -c dglteam dgl-cuda11.1
+   conda install dgl-cuda11.1 -c dglteam 
    pip install -r requirements.txt
    ```
 2. To select the dataset being tested, modify the path to the directory and the class names in constants.py. 
